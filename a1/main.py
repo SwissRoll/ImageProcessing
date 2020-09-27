@@ -32,7 +32,7 @@ except:
 
 
 
-haveTK = False # sys.platform != 'darwin'
+haveTK = True # sys.platform != 'darwin'
 
 
 # Globals
@@ -75,10 +75,32 @@ def applyBrightnessAndContrast( brightness, contrast ):
   width  = currentImage.size[0]
   height = currentImage.size[1]
 
-  srcPixels = tempImage.load()
+  srcPixels = tempImage.load()  # is the original image, but we only need it when making changes
   dstPixels = currentImage.load()
 
-  # YOUR CODE HERE
+  Y = 0
+
+  # use a linear mapping? x' = ax + b (a = contrast, b = brightness)
+  # need to check bounds?
+
+  # print(srcPixels[0,0]) # gets YCbCr of a pixel as a tuple
+  # print(srcPixels[0,0][0]) # gets Y
+
+  # do computations on Y[0,1] Cb[-0.5,0.5] Cr[-0.5,0.5]?
+  for x in range(0, width):
+    for y in range(0, height):
+      pixel = list(srcPixels[x,y])  # gotta convert from immutable tuple to a list
+      newIntensity = contrast * pixel[Y] + brightness
+      
+      # enforce intensity limits
+      if newIntensity > 255:
+        newIntensity = 255
+      elif newIntensity < 0:
+        newIntensity = 0
+      
+      pixel[Y] = newIntensity
+
+      dstPixels[x,y] = tuple(pixel)
 
   print( 'adjust brightness = %f, contrast = %f' % (brightness,contrast) )
 
