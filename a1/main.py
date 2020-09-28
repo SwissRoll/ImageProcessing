@@ -160,9 +160,19 @@ def scaleImage( factor ):
   srcPixels = tempImage.load()
   dstPixels = currentImage.load()
 
-  # YOUR CODE HERE
-
-  # uses backprojection
+  # uses backprojection, need to scale around the center, so translation + scaling + translation
+  for xDst in range(width):
+    for yDst in range(height):
+      # (x,y) = T-1(xDst, yDst) -> need to find out this inverse transform
+      # dstPixels[xDst, yDst] = srcPixels[x,y]
+      x = math.floor((1/factor) * (xDst - width/2 * (1 - factor)))
+      y = math.floor((1/factor) * (yDst - height/2 * (1 - factor)))
+      # map to pixel only if within bounds of original image
+      if width > x >= 0 and height > y >= 0:
+        dstPixels[xDst, yDst] = srcPixels[x,y]
+      # otherwise, make the pixel white
+      else:
+        dstPixels[xDst, yDst] = (255, 128, 128)
 
   print( 'scale image by %f' % factor )
 
