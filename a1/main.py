@@ -87,8 +87,8 @@ def applyBrightnessAndContrast( brightness, contrast ):
   # print(srcPixels[0,0][0]) # gets Y
 
   # do computations on Y[0,1] Cb[-0.5,0.5] Cr[-0.5,0.5]?
-  for x in range(0, width):
-    for y in range(0, height):
+  for x in range(width):
+    for y in range(height):
       pixel = list(srcPixels[x,y])  # gotta convert from immutable tuple to a list
       newIntensity = contrast * pixel[Y] + brightness
       
@@ -114,7 +114,59 @@ def performHistoEqualization( radius ):
   width  = currentImage.size[0]
   height = currentImage.size[1]
 
-  # YOUR CODE HERE
+  Y = 0
+
+  # s = pixelRange/totalNumPixels * SUM,i->r(h(i)) - 1
+  # calculate T(r) for each r, then store in a lookup table
+  # after, go through all src pixels and replace intensities with T(r) values
+  # how to get sume of h(i)? -> go through and count amount at each intensity
+
+  lookup = {}
+
+  for x in range(width):
+    for y in range(height):
+      
+      # create a local histogram
+      localHistogram = {}
+      for intensity in range(256):
+        localHistogram[intensity] = 0
+
+      for xOffset in range(-radius, radius + 1):
+        for yOffset in range(-radius, radius + 1):
+          xLocal = x + xOffset
+          yLocal = y + yOffset
+          # enforce coordinate limits
+          if xLocal < 0:
+            xLocal = 0
+          elif xLocal >= width:
+            xLocal = width - 1
+          if yLocal < 0:
+            yLocal = 0
+          elif yLocal >= height:
+            yLocal = height - 1
+          # store intensity in local histogram
+          pixel = list(pixels[xLocal, yLocal])
+          localHistogram[pixel[Y]] += 1
+      
+      pixel = list(pixels[x,y])
+      runningSum = 0
+      T = {}
+      for r in range(256):
+        runningSum += localHistogram[r] # this contains counts
+        T[r] = (256/(2 * radius + 1) ** 2) * runningSum - 1
+      # T is full of counts up to each intensity
+      # T is an equalized local histogram
+      # just want a single intensity value linked to the current pixel
+      lookup[(x,y)] = T[pixel[Y]]
+      # where does 3387 come from?
+      # (2 * radius + 1)^2 was evaluating to 9 instead of 121... -> ** is the power operator...
+      # T[r] values should have a max of 255, with max runningSum being 121
+  
+  for x in range(width):
+    for y in range(height):
+      pixel = list(pixels[x,y])
+      pixel[Y] = lookup[(x,y)]
+      pixels[x,y] = tuple(pixel)
 
   print( 'perform local histogram equalization with radius %d' % radius )
 
@@ -133,6 +185,8 @@ def scaleImage( factor ):
   dstPixels = currentImage.load()
 
   # YOUR CODE HERE
+
+  # uses backprojection
 
   print( 'scale image by %f' % factor )
 
