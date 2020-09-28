@@ -75,31 +75,22 @@ def applyBrightnessAndContrast( brightness, contrast ):
   width  = currentImage.size[0]
   height = currentImage.size[1]
 
-  srcPixels = tempImage.load()  # is the original image, but we only need it when making changes
+  srcPixels = tempImage.load()
   dstPixels = currentImage.load()
 
-  Y = 0
+  Y = 0  # for clarity when accessing the intensity of a pixel
 
-  # use a linear mapping? x' = ax + b (a = contrast, b = brightness)
-  # need to check bounds?
-
-  # print(srcPixels[0,0]) # gets YCbCr of a pixel as a tuple
-  # print(srcPixels[0,0][0]) # gets Y
-
-  # do computations on Y[0,1] Cb[-0.5,0.5] Cr[-0.5,0.5]?
   for x in range(width):
     for y in range(height):
-      pixel = list(srcPixels[x,y])  # gotta convert from immutable tuple to a list
+      pixel = list(srcPixels[x,y])  # have to convert from immutable tuple to a list
       newIntensity = contrast * pixel[Y] + brightness
-      
       # enforce intensity limits
       if newIntensity > 255:
         newIntensity = 255
       elif newIntensity < 0:
         newIntensity = 0
-      
+      # apply changes to destination pixel
       pixel[Y] = newIntensity
-
       dstPixels[x,y] = tuple(pixel)
 
   print( 'adjust brightness = %f, contrast = %f' % (brightness,contrast) )
@@ -114,23 +105,14 @@ def performHistoEqualization( radius ):
   width  = currentImage.size[0]
   height = currentImage.size[1]
 
-  Y = 0
+  Y = 0  # for clarity when accessing the intensity of a pixel
 
-  # s = pixelRange/totalNumPixels * SUM,i->r(h(i)) - 1
-  # calculate T(r) for each r, then store in a lookup table
-  # after, go through all src pixels and replace intensities with T(r) values
-  # how to get sume of h(i)? -> go through and count amount at each intensity
-
-  lookup = {}
+  lookup = {}  # will store the results of local histogram equalization for each pixel
 
   for x in range(width):
     for y in range(height):
-      
-      # create a local histogram
-      localHistogram = {}
-      for intensity in range(256):
-        localHistogram[intensity] = 0
-
+      # create a local histogram with zero count for each intensity value
+      localHistogram = {key: 0 for key in range(256)}
       for xOffset in range(-radius, radius + 1):
         for yOffset in range(-radius, radius + 1):
           xLocal = x + xOffset
@@ -149,19 +131,13 @@ def performHistoEqualization( radius ):
           localHistogram[pixel[Y]] += 1
       
       pixel = list(pixels[x,y])
-      runningSum = 0
-      T = {}
-      for r in range(256):
-        runningSum += localHistogram[r] # this contains counts
-        T[r] = (256/(2 * radius + 1) ** 2) * runningSum - 1
-      # T is full of counts up to each intensity
-      # T is an equalized local histogram
-      # just want a single intensity value linked to the current pixel
-      lookup[(x,y)] = T[pixel[Y]]
-      # where does 3387 come from?
-      # (2 * radius + 1)^2 was evaluating to 9 instead of 121... -> ** is the power operator...
-      # T[r] values should have a max of 255, with max runningSum being 121
+      # sum up all pixels of intensities up to and including center pixel intensity
+      # note that summing them as lists is slightly faster than without
+      runningSum = sum([count for intensity, count in localHistogram.items() if intensity <= pixel[Y]])
+      # store result of local histogram equalization transformation in lookup table
+      lookup[(x,y)] = (256/(2 * radius + 1) ** 2) * runningSum - 1
   
+  # Replace each pixel's intensity with the corresponding equalized value
   for x in range(width):
     for y in range(height):
       pixel = list(pixels[x,y])
