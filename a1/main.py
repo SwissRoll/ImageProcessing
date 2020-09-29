@@ -160,16 +160,32 @@ def scaleImage( factor ):
   srcPixels = tempImage.load()
   dstPixels = currentImage.load()
 
-  # uses backprojection, need to scale around the center, so translation + scaling + translation
+  # uses backward projection + bilinear interpolation
   for xDst in range(width):
     for yDst in range(height):
-      # (x,y) = T-1(xDst, yDst) -> need to find out this inverse transform
-      # dstPixels[xDst, yDst] = srcPixels[x,y]
-      x = math.floor((1/factor) * (xDst - width/2 * (1 - factor)))
-      y = math.floor((1/factor) * (yDst - height/2 * (1 - factor)))
+      x = (1/factor) * (xDst - width/2 * (1 - factor))
+      y = (1/factor) * (yDst - height/2 * (1 - factor))
+      floorX = math.floor(x)
+      floorY = math.floor(y)
+      alpha = x - floorX
+      beta = y - floorY
+      if floorX + 1 >= width:
+        floorX = width - 2
+      elif floorX < 0:
+        floorX = 0
+      if floorY + 1 >= height:
+        floorY = height - 2
+      elif floorY < 0:
+        floorY = 0
+      temp = (1 - alpha) * (1 - beta) * srcPixels[floorX, floorY][0] + \
+              (1 - alpha) * beta * srcPixels[floorX, floorY + 1][0] + \
+              alpha * (1 - beta) * srcPixels[floorX + 1, floorY][0] + \
+              alpha * beta * srcPixels[floorX + 1, floorY + 1][0]
       # map to pixel only if within bounds of original image
       if width > x >= 0 and height > y >= 0:
-        dstPixels[xDst, yDst] = srcPixels[x,y]
+        pixel = list(srcPixels[x,y])
+        pixel[0] = temp
+        dstPixels[xDst, yDst] = tuple(pixel)
       # otherwise, make the pixel white
       else:
         dstPixels[xDst, yDst] = (255, 128, 128)
