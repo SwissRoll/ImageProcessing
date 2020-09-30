@@ -76,12 +76,12 @@ def applyBrightnessAndContrast( brightness, contrast ):
 
   # The two constants below should be the same to ensure smooth intensity changes
 
-  # Intensity value pixels will converge on as contrast goes to zero
-  zeroContrastIntensity = 128
-
   # Intensity below which pixels will get darker and
   # above which they will get brighter as contrast increases
   thresholdIntensity = 128
+
+  # Intensity value pixels will converge on as contrast goes to zero
+  zeroContrastIntensity = 128
 
   for x in range(width):
     for y in range(height):
