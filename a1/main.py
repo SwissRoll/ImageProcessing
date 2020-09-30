@@ -1,11 +1,13 @@
 # CMPE 457 Assignment 1 - Image manipulation
 # 
 # Declan Rowett - 10211314
-# Sept. 29th, 2020
+# Sept. 30th, 2020
 # 
-# Notes to TA:
-#   • I have created Y = 0 as a global variable
-#   • Image editing is cool
+# Notes to the TA(s):
+#   - I made Y = 0 as a global variable
+#   - I made two constants for the linear mapping of intensity that applies 
+#     brightness and contrast to make the changes look better
+#   - Image manipulation is cool 
 
 import sys, os, numpy, math
 
@@ -72,11 +74,21 @@ def applyBrightnessAndContrast( brightness, contrast ):
   srcPixels = tempImage.load()
   dstPixels = currentImage.load()
 
+  # The two constants below should be the same to ensure smooth intensity changes
+
+  # Intensity value pixels will converge on as contrast goes to zero
+  zeroContrastIntensity = 128
+
+  # Intensity below which pixels will get darker and
+  # above which they will get brighter as contrast increases
+  thresholdIntensity = 128
+
   for x in range(width):
     for y in range(height):
       pixel = list(srcPixels[x,y])  # have to convert from immutable tuple to a list
 
-      newIntensity = contrast * pixel[Y] + brightness
+      # Linear mapping of intensity
+      newIntensity = contrast * (pixel[Y] - thresholdIntensity) + brightness + zeroContrastIntensity
 
       # Enforce intensity limits
       if newIntensity > 255:
@@ -99,7 +111,7 @@ def performHistoEqualization( radius ):
   width  = currentImage.size[0]
   height = currentImage.size[1]
 
-  lookup = {}  # maps individual pixels to their equalized intensities
+  lookup = {}  # maps individual pixels in currentImage to their equalized intensities
 
   for x in range(width):
     for y in range(height):
@@ -159,14 +171,14 @@ def scaleImage( factor ):
   srcPixels = tempImage.load()
   dstPixels = currentImage.load()
 
-  # Uses backward projection with bilinear interpolation
+  # Uses backward projection with bilinear interpolation to scale about the center of the image
   for xDst in range(width):
     for yDst in range(height):
 
       # 3x3 homogeneous transformation matrix consists of:
-      #   • translation by (-width/2, -height/2)
-      #   • scaling by factor
-      #   • translation by (+width/2, +height/2)
+      #   - translation by (-width/2, -height/2)
+      #   - scaling by factor
+      #   - translation by (+width/2, +height/2)
 
       # Set values for x and y using inverse of the transformation matrix
       x = (1/factor) * (xDst - width/2 * (1 - factor))
