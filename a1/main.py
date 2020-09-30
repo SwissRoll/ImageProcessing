@@ -1,18 +1,11 @@
-# Image manipulation
-#
-# You'll need Python 2.7 and must install these packages:
-#
-#   numpy, PyOpenGL, Pillow
-#
-# Note that file loading and saving (with 'l' and 's') are not
-# available if 'haveTK' below is False.  If you manage to install
-# python-tk, you can set that to True.  Otherwise, you'll have to
-# provide the filename in 'imgFilename' below.
-#
-# Note that images, when loaded, are converted to the YCbCr
-# colourspace, and that you should manipulate only the Y component 
-# of each pixel when doing intensity changes.
-
+# CMPE 457 Assignment 1 - Image manipulation
+# 
+# Declan Rowett - 10211314
+# Sept. 29th, 2020
+# 
+# Notes to TA:
+#   • I have created Y = 0 as a global variable
+#   • Image editing is cool
 
 import sys, os, numpy, math
 
@@ -42,6 +35,7 @@ windowHeight =  800
 
 localHistoRadius = 5  # distance within which to apply local histogram equalization
 
+Y = 0  # for clarity when accessing the intensity of a pixel
 
 
 # Current image
@@ -78,18 +72,18 @@ def applyBrightnessAndContrast( brightness, contrast ):
   srcPixels = tempImage.load()
   dstPixels = currentImage.load()
 
-  Y = 0  # for clarity when accessing the intensity of a pixel
-
   for x in range(width):
     for y in range(height):
       pixel = list(srcPixels[x,y])  # have to convert from immutable tuple to a list
+
       newIntensity = contrast * pixel[Y] + brightness
-      # enforce intensity limits
+
+      # Enforce intensity limits
       if newIntensity > 255:
         newIntensity = 255
       elif newIntensity < 0:
         newIntensity = 0
-      # apply changes to destination pixel
+
       pixel[Y] = newIntensity
       dstPixels[x,y] = tuple(pixel)
 
@@ -105,19 +99,20 @@ def performHistoEqualization( radius ):
   width  = currentImage.size[0]
   height = currentImage.size[1]
 
-  Y = 0  # for clarity when accessing the intensity of a pixel
-
-  lookup = {}  # will store the results of local histogram equalization for each pixel
+  lookup = {}  # maps individual pixels to their equalized intensities
 
   for x in range(width):
     for y in range(height):
-      # create a local histogram with zero count for each intensity value
+
+      # Create a local histogram with zero count for each intensity value
       localHistogram = {key: 0 for key in range(256)}
+
       for xOffset in range(-radius, radius + 1):
         for yOffset in range(-radius, radius + 1):
           xLocal = x + xOffset
           yLocal = y + yOffset
-          # enforce coordinate limits
+
+          # Enforce coordinate limits
           if xLocal < 0:
             xLocal = 0
           elif xLocal >= width:
@@ -126,17 +121,21 @@ def performHistoEqualization( radius ):
             yLocal = 0
           elif yLocal >= height:
             yLocal = height - 1
-          # store intensity in local histogram
+
+          # Increase count of intensity value in local histogram
           pixel = list(pixels[xLocal, yLocal])
           localHistogram[pixel[Y]] += 1
-      
+
       pixel = list(pixels[x,y])
-      # sum up all pixels of intensities up to and including center pixel intensity
-      # note that summing them as lists is slightly faster than without
+
+      # Sum up all pixel intensities up to and including 
+      # center pixel intensity (summing as lists is a bit faster)
       runningSum = sum([count for intensity, count in localHistogram.items() if intensity <= pixel[Y]])
-      # store result of local histogram equalization transformation in lookup table
+
+      # Store resulting intensity of local histogram equalization 
+      # transformation in lookup table at current pixel coordinates
       lookup[(x,y)] = (256/(2 * radius + 1) ** 2) * runningSum - 1
-  
+
   # Replace each pixel's intensity with the corresponding equalized value
   for x in range(width):
     for y in range(height):
@@ -160,15 +159,26 @@ def scaleImage( factor ):
   srcPixels = tempImage.load()
   dstPixels = currentImage.load()
 
-  # uses backward projection + bilinear interpolation
+  # Uses backward projection with bilinear interpolation
   for xDst in range(width):
     for yDst in range(height):
+
+      # 3x3 homogeneous transformation matrix consists of:
+      #   • translation by (-width/2, -height/2)
+      #   • scaling by factor
+      #   • translation by (+width/2, +height/2)
+
+      # Set values for x and y using inverse of the transformation matrix
       x = (1/factor) * (xDst - width/2 * (1 - factor))
       y = (1/factor) * (yDst - height/2 * (1 - factor))
+
+      # Define values needed for bilinear interpolation
       floorX = math.floor(x)
       floorY = math.floor(y)
       alpha = x - floorX
       beta = y - floorY
+
+      # Enforce coordinate limits
       if floorX + 1 >= width:
         floorX = width - 2
       elif floorX < 0:
@@ -177,16 +187,20 @@ def scaleImage( factor ):
         floorY = height - 2
       elif floorY < 0:
         floorY = 0
-      temp = (1 - alpha) * (1 - beta) * srcPixels[floorX, floorY][0] + \
-              (1 - alpha) * beta * srcPixels[floorX, floorY + 1][0] + \
-              alpha * (1 - beta) * srcPixels[floorX + 1, floorY][0] + \
-              alpha * beta * srcPixels[floorX + 1, floorY + 1][0]
-      # map to pixel only if within bounds of original image
+
+      # Perform bilinear interpolation on backward projected pixel
+      interpolatedIntensity = (1 - alpha) * (1 - beta) * srcPixels[floorX, floorY][Y] + \
+                              (1 - alpha) * beta * srcPixels[floorX, floorY + 1][Y] + \
+                              alpha * (1 - beta) * srcPixels[floorX + 1, floorY][Y] + \
+                              alpha * beta * srcPixels[floorX + 1, floorY + 1][Y]
+
+      # Map to pixel only if within bounds of original image
       if width > x >= 0 and height > y >= 0:
         pixel = list(srcPixels[x,y])
-        pixel[0] = temp
+        pixel[Y] = interpolatedIntensity
         dstPixels[xDst, yDst] = tuple(pixel)
-      # otherwise, make the pixel white
+
+      # Otherwise, make the pixel white
       else:
         dstPixels[xDst, yDst] = (255, 128, 128)
 
