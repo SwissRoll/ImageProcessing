@@ -18,14 +18,17 @@ from OpenGL.GLU import *
 
 # Globals
 
+# windowWidth  = 1000 # window dimensions
+# windowHeight =  800
 windowWidth  = 1000 # window dimensions
-windowHeight =  800
+windowHeight =  600
 
 showMagnitude = True            # for the FT, show the magnitude.  Otherwise, show the phase
 doHistoEq = False               # do histogram equalization on the FT
 centreFT = True
 
-texID = glGenTextures(1)        # for OpenGL
+# texID = glGenTextures(1)        # for OpenGL
+texID = None                    # for OpenGL
 
 radius = 10                     # editing radius
 editMode = 's'                  # editing mode: 'a' = additive; 's' = subtractive
@@ -87,13 +90,19 @@ def ft1D( signal ):
 # Output is the same.
 
 def forwardFT( image ):
-
-  # YOUR CODE HERE
-  #
-  # You must replace this code with your own, keeping the same function name are parameters.
   
-  return np.fft.fft2( image )
+  imageCopy = image.copy()
 
+  # Compute F(u,y) for all (u,y)
+  for y, row in enumerate(imageCopy):
+    imageCopy[y] = ft1D(row)
+
+  # Use F(u,y) to compute F(u,v) for all (u,v)
+  # Take transpose so can reference the columns with a single index
+  for u, column in enumerate(imageCopy.T):
+    imageCopy.T[u] = ft1D(column)
+  
+  return imageCopy
 
 
 # Do an inverse FT
@@ -104,12 +113,17 @@ def forwardFT( image ):
 
 def inverseFT( image ):
 
-  # YOUR CODE HERE
-  #
-  # You must replace this code with your own, keeping the same function name are parameters.
-  
-  return np.fft.ifft2( image )
+  height, width = image.shape
+  imageCopy = image.copy()
 
+  # Inverse FT is equivalent to taking the forward FT of the image conjugate
+  # and then normalizing it
+
+  imageCopy = np.conj(imageCopy)
+  imageCopy = forwardFT(imageCopy)
+  imageCopy = imageCopy / (height * width)
+
+  return imageCopy
 
 
 # Multiply two FTs
@@ -123,11 +137,22 @@ def inverseFT( image ):
 
 
 def multiplyFTs( image, filter ):
+  # After simplification, the shift to apply to the filter becomes: F(u,v) * e^{i*pi(u+v)}
+  # By Euler's Theorem, e^{ikt} = cost(kt) + isin(kt), where k = pi and t = u+v
+  # As u and v are the indices of the filter array, u+v is either odd or even
+  # If u+v is odd, e^{i*pi(u+v)} = -1
+  # If u+v is even, e^{i*pi(u+v)} = 1
+  # So the shift can be represented as F(u,v) * (-1)^(u+v)
 
-  # YOUR CODE HERE
+  height, width = filter.shape
+  filterCopy = filter.copy()  # don't want to change the original filter
 
-  return image # (this is wrong) 
+  for u in range(height):
+    for v in range(width):
+      if (u + v) % 2 == 1:
+        filterCopy[u][v] = filter[u][v] * (-1)
 
+  return image * filterCopy
 
 
 # Set up the display and draw the current image
@@ -161,7 +186,7 @@ def display():
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER)
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, [1,0,0,1] );
+  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, [1,0,0,1] )
 
   # Images to draw, in rows and columns
 
