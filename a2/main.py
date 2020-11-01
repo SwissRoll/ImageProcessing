@@ -116,11 +116,12 @@ def inverseFT( image ):
   height, width = image.shape
   imageCopy = image.copy()
 
-  # Inverse FT is equivalent to taking the forward FT of the image conjugate
-  # and then normalizing it
+  # Inverse FT is equivalent to taking the forward FT of the image conjugate,
+  # then taking the conjugate of the result and normalizing it
 
   imageCopy = np.conj(imageCopy)
   imageCopy = forwardFT(imageCopy)
+  imageCopy = np.conj(imageCopy)
   imageCopy = imageCopy / (height * width)
 
   return imageCopy
