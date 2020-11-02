@@ -18,8 +18,6 @@ from OpenGL.GLU import *
 
 # Globals
 
-# windowWidth  = 1000 # window dimensions
-# windowHeight =  800
 windowWidth  = 1000 # window dimensions
 windowHeight =  600
 
@@ -27,7 +25,6 @@ showMagnitude = True            # for the FT, show the magnitude.  Otherwise, sh
 doHistoEq = False               # do histogram equalization on the FT
 centreFT = True
 
-# texID = glGenTextures(1)        # for OpenGL
 texID = None                    # for OpenGL
 
 radius = 10                     # editing radius
@@ -793,10 +790,39 @@ def mouseMotion( x, y ):
 
 def modulatePixels( image, x, y, isFT ):
 
-  # YOUR CODE HERE
+  height, width = image.shape
 
-  pass
+  # Set standard deviation for editing Gaussian
+  stdev = radius/2.0
 
+  for xOffset in range (-radius, radius + 1):
+    for yOffset in range (-radius, radius + 1):
+
+      # Check if pixel is within modulation radius
+      dist = np.sqrt( xOffset ** 2 + yOffset ** 2 )
+
+      if dist <= radius:
+        xLocal = wrap(x + xOffset, width)
+        yLocal = wrap(y + yOffset, height)
+        imageVal = image[yLocal][xLocal]
+
+        # No normalization needed since we want the pixel value to be 0 at the center
+        # of modulation circle, so the max value of the gaussian should be 1
+        gaussian = np.exp( -dist / (2 * stdev ** 2) )
+
+        if isFT:
+          imageVal = np.log(imageVal)
+
+        if editMode == 's':
+          imageVal = imageVal * (1 - gaussian)
+        elif editMode == 'a':
+          imageVal = imageVal * (1 + 0.1 * gaussian)
+
+        if isFT:
+          imageVal = np.exp(imageVal)
+          image[height - yLocal - 1][width - xLocal - 1] = imageVal
+
+        image[yLocal][xLocal] = imageVal
 
 
 # For an image coordinate, if it's < 0 or >= max, wrap the coorindate
