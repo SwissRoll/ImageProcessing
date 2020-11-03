@@ -144,7 +144,7 @@ def multiplyFTs( image, filter ):
   # So the shift can be represented as F(u,v) * (-1)^(u+v)
 
   height, width = filter.shape
-  filterCopy = filter.copy()  # don't want to change the original filter
+  filterCopy = filter.copy()
 
   for u in range(height):
     for v in range(width):
@@ -562,8 +562,7 @@ def loadImage( path ):
 
   img = np.array( list( img.getdata() ), np.complex_ ).reshape( (img.size[1],img.size[0]) )
 
-  # Solution for filters not working properly when an image has
-  # an odd-valued dimension
+  # Solution for filters not working properly when an image has an odd-valued dimension
   M,N = img.shape
   if M % 2 == 1:
     extraRow = np.ones((img.shape[1]))
