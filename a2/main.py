@@ -33,7 +33,7 @@ zoom = 1.0                      # amount by which to zoom images
 translate = (0.0,0.0)           # amount by which to translate images
 
 
-useTK = False
+useTK = True
 
 
 # Image
@@ -88,7 +88,8 @@ def ft1D( signal ):
 
 def forwardFT( image ):
   
-  imageCopy = image.copy()
+  # Make explicitly complex to not lose imaginary part
+  imageCopy = np.array(image, dtype='complex')
 
   # Compute F(u,y) for all (u,y)
   for y, row in enumerate(imageCopy):
@@ -798,7 +799,7 @@ def modulatePixels( image, x, y, isFT ):
   for xOffset in range (-radius, radius + 1):
     for yOffset in range (-radius, radius + 1):
 
-      # Check if pixel is within modulation radius
+      # Check if pixel offset is within modulation radius
       dist = np.sqrt( xOffset ** 2 + yOffset ** 2 )
 
       if dist <= radius:
