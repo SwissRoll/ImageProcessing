@@ -825,9 +825,9 @@ def modulatePixels( image, x, y, isFT ):
         if isFT:
           ak =  2 * np.real(imageVal)
           bk = -2 * np.imag(imageVal)
-          phase = np.arctan2( -1 * bk, ak )
+          phase = np.arctan2( -bk, ak )
           # Take log of magnitude only
-          imageVal = np.log( 1 + np.sqrt( ak*ak + bk*bk ) )
+          imageVal = np.log( 1 + np.sqrt( ak ** 2 + bk ** 2 ) )
 
         if editMode == 's':
           newVal = imageVal * (1 - gaussian)
@@ -838,7 +838,7 @@ def modulatePixels( image, x, y, isFT ):
           magnitude = np.exp(newVal) - 1
           ak = magnitude * np.cos(phase)
           bk = magnitude * np.sin(phase)
-          newVal = ak + bk*1j
+          newVal = ak + bk * 1j
           image[height - yLocal - 1][width - xLocal - 1] = newVal
 
         image[yLocal][xLocal] = newVal
