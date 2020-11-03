@@ -560,7 +560,19 @@ def loadImage( path ):
     print( 'Failed to load image %s' % path )
     sys.exit(1)
 
-  return np.array( list( img.getdata() ), np.complex_ ).reshape( (img.size[1],img.size[0]) )
+  img = np.array( list( img.getdata() ), np.complex_ ).reshape( (img.size[1],img.size[0]) )
+
+  # Solution for filters not working properly when an image has
+  # an odd-valued dimension
+  M,N = img.shape
+  if M % 2 == 1:
+    extraRow = np.ones((img.shape[1]))
+    img = np.vstack((img, extraRow))
+  if N % 2 == 1:
+    extraColumn = np.ones((img.shape[0], 1))
+    img = np.hstack((img, extraColumn))
+
+  return img
 
 
 
@@ -812,18 +824,25 @@ def modulatePixels( image, x, y, isFT ):
         gaussian = np.exp( -dist / (2 * stdev ** 2) )
 
         if isFT:
-          imageVal = np.log(imageVal)
+          ak =  2 * np.real(imageVal)
+          bk = -2 * np.imag(imageVal)
+          phase = np.arctan2( -1 * bk, ak )
+          # Take log of magnitude only
+          imageVal = np.log( 1 + np.sqrt( ak*ak + bk*bk ) )
 
         if editMode == 's':
-          imageVal = imageVal * (1 - gaussian)
+          newVal = imageVal * (1 - gaussian)
         elif editMode == 'a':
-          imageVal = imageVal * (1 + 0.1 * gaussian)
+          newVal = imageVal * (1 + 0.1 * gaussian)
 
         if isFT:
-          imageVal = np.exp(imageVal)
-          image[height - yLocal - 1][width - xLocal - 1] = imageVal
+          magnitude = np.exp(newVal) - 1
+          ak = magnitude * np.cos(phase)
+          bk = magnitude * np.sin(phase)
+          newVal = ak + bk*1j
+          image[height - yLocal - 1][width - xLocal - 1] = newVal
 
-        image[yLocal][xLocal] = imageVal
+        image[yLocal][xLocal] = newVal
 
 
 # For an image coordinate, if it's < 0 or >= max, wrap the coorindate
