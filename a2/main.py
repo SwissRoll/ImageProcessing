@@ -88,7 +88,7 @@ def ft1D( signal ):
 
 def forwardFT( image ):
   
-  # Make explicitly complex to not lose imaginary part
+  # Make array explicitly complex to not lose imaginary part
   imageCopy = np.array(image, dtype='complex')
 
   # Compute F(u,y) for all (u,y)
@@ -117,12 +117,8 @@ def inverseFT( image ):
   # Inverse FT is equivalent to taking the forward FT of the image conjugate,
   # then taking the conjugate of the result and normalizing it
 
-  imageCopy = np.conj(imageCopy)
-  imageCopy = forwardFT(imageCopy)
-  imageCopy = np.conj(imageCopy)
-  imageCopy = imageCopy / (height * width)
-
-  return imageCopy
+  result = forwardFT( np.conj(imageCopy) )
+  return np.conj(result) / (height * width)
 
 
 # Multiply two FTs
@@ -137,7 +133,7 @@ def inverseFT( image ):
 
 def multiplyFTs( image, filter ):
   # After simplification, the shift to apply to the filter becomes: F(u,v) * e^{i*pi(u+v)}
-  # By Euler's Theorem, e^{ikt} = cost(kt) + isin(kt), where k = pi and t = u+v
+  # By Euler's Theorem, e^{ikt} = cost(kt) + i*sin(kt), where k = pi and t = u+v
   # As u and v are the indices of the filter array, u+v is either odd or even
   # If u+v is odd, e^{i*pi(u+v)} = -1
   # If u+v is even, e^{i*pi(u+v)} = 1
@@ -805,13 +801,13 @@ def modulatePixels( image, x, y, isFT ):
   height, width = image.shape
 
   # Set standard deviation for editing Gaussian
-  stdev = radius/2.0
+  stdev = radius / 2.0
 
   for xOffset in range (-radius, radius + 1):
     for yOffset in range (-radius, radius + 1):
 
       # Check if pixel offset is within modulation radius
-      dist = np.sqrt( xOffset ** 2 + yOffset ** 2 )
+      dist = np.sqrt(xOffset ** 2 + yOffset ** 2)
 
       if dist <= radius:
         xLocal = wrap(x + xOffset, width)
@@ -825,9 +821,9 @@ def modulatePixels( image, x, y, isFT ):
         if isFT:
           ak =  2 * np.real(imageVal)
           bk = -2 * np.imag(imageVal)
-          phase = np.arctan2( -bk, ak )
+          phase = np.arctan2(-bk, ak)
           # Take log of magnitude only
-          imageVal = np.log( 1 + np.sqrt( ak ** 2 + bk ** 2 ) )
+          imageVal = np.log( 1 + np.sqrt(ak ** 2 + bk ** 2) )
 
         if editMode == 's':
           newVal = imageVal * (1 - gaussian)

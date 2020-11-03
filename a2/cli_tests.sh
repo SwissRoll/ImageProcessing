@@ -33,6 +33,15 @@ $total \
 i oi cli_test_results/denoised_canvas.png oift cli_test_results/canvasft_test.png
 
 # Denoising moon.png
+counter=30
+total=""
+while [ $counter -le 135 ]
+do
+    command1=" eift 0 $counter"
+    total="${total} ${command1}"
+    ((counter=counter+15))
+done
+
 python main.py moon.jpg delta f r 10 \
-eift 0 30 eift 0 45 eift 0 60 eift 0 75 eift 0 90 eift 0 105 eift 0 120 eift 0 135 \
+$total \
 i oi cli_test_results/denoised_moon.png oift cli_test_results/moonft_test.png
