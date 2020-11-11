@@ -816,7 +816,7 @@ def modulatePixels( image, x, y, isFT ):
 
         # No normalization needed since we want the pixel value to be 0 at the center
         # of modulation circle, so the max value of the gaussian should be 1
-        gaussian = np.exp( -dist / (2 * stdev ** 2) )
+        gaussian = np.exp( -(dist ** 2) / (2 * stdev ** 2) )
 
         if isFT:
           ak =  2 * np.real(imageVal)
