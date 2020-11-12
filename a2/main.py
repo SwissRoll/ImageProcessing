@@ -821,7 +821,7 @@ def modulatePixels( image, x, y, isFT ):
         if isFT:
           ak =  2 * np.real(imageVal)
           bk = -2 * np.imag(imageVal)
-          phase = np.arctan2(-bk, ak)
+          phase = np.arctan2(bk, ak)
           # Take log of magnitude only
           imageVal = np.log( 1 + np.sqrt(ak ** 2 + bk ** 2) )
 
