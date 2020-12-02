@@ -1,0 +1,37 @@
+CISC/CMPE 457 Assignment 3
+
+Due Friday, December 11 at noon
+
+You can do this assignment in groups of two, if you wish.
+
+0. Run the Python code in this archive.  Press '?' to see the options.
+   Note that you can move the image around by dragging the mouse, and
+   can zoom by dragging up/down with the right button down.
+
+   Once your code is working, you press 'c' to compute the encoding,
+   then decoding, and can then alternately press 'j' and 'o' to
+   compare the the JPEG after encoding/decoding ('j') and the original
+   image ('o').  Pressing 'd' shows the DCT basis functions.
+
+1. Add code to forwardJPEG() to complete the JPEG encoding as
+   specified by the comments in that function.
+
+2. Add code to inverseJPEG() to complete the JPEG decoding as
+   specified by the comments in that function.  This is essentially
+   the opposite of the code in forwardJPEG().
+
+The changes to forwardJPEG() and inverseJPEG() can be done in 11 lines
+of code each if you use NumPy array multiplication and .sum() to
+compute the sum-of-products of two arrays, like (a*b).sum().
+
+Debugging output is enabled if you press 'x', then run the JPEG
+routine (by pressing 'c').  This output will appear in the file
+'debug.txt'.  You can compare your output to the sample output in the
+'images' directory.  Look at those files to get an idea of the
+expected output.  NOTE: Your debugging output might be slightly
+different than the outputs in the 'images' directory.  That is, the
+individual numbers might differ by at most 1.
+
+Submit a single Python file to OnQ.  At the top of that file, include
+the name(s) and student number(s) of the person(s) who worked on this
+submission.
