@@ -292,8 +292,11 @@ def inverseJPEG():
                 # forwardJPEG().  Don't forget to use and update ACencodingIndex.
 
                 # YOUR CODE HERE [1 mark]
-
-                pass
+                for u in range(blockSize):
+                    for v in range(blockSize):
+                        if not ( u == 0 and v == 0 ):
+                            dct[u,v] = ACencoding[k, ACencodingIndex[k] + zigzag[u,v] - 1]
+                ACencodingIndex[k] += blockSize * blockSize - 1
 
               
                 # Extract DC component from DCencoding vector.  This
@@ -301,16 +304,15 @@ def inverseJPEG():
                 # forget to use and update DCencodingIndex.
 
                 # YOUR CODE HERE [1 mark]
-
-                pass
+                dct[0,0] = DCencoding[k, DCencodingIndex[k]]
+                DCencodingIndex[k] += 1
 
 
                 # Reverse the quantization.  This is the opposite of
                 # Step 2 in forwardJPEG().
 
                 # YOUR CODE HERE [1 mark]
-              
-                pass
+                dct = (dct * (compressionFactor * quantizationTable[k])).round()
 
 
                 # Compute inverse DCT of this block, [i,i+7]x[j,j+7],
@@ -320,8 +322,9 @@ def inverseJPEG():
                 # dct[,] and dctBases[,,,].
 
                 # YOUR CODE HERE [1 mark]
-
-                pass
+                for x in range(blockSize):
+                    for y in range(blockSize):
+                        image[i+x,j+y,k] = (dct * dctBases[:,:,x,y]).sum()
 
 
 
