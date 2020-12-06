@@ -22,7 +22,7 @@ from OpenGL.GLU import *
 
 # Globals
 
-useTK = False
+useTK = True
 
 Nrows = 0                       # image dimensions.  Each is evenly divisible by 8.
 Ncols = 0
@@ -176,8 +176,9 @@ def forwardJPEG():
                 # and channel, k.  Store the DCT in dct[u][v].
 
                 # YOUR CODE HERE [2 marks]
-
-                pass
+                for u in range(blockSize):
+                    for v in range(blockSize):
+                        dct[u,v] = (inputImage[i:i+blockSize, j:j+blockSize, k] * dctBases[u,v]).sum()
               
 
                 # Step 2. Apply quantization.  This will modify the coefficients in dct[u][v].
@@ -186,8 +187,7 @@ def forwardJPEG():
                 # allows you to adjust the compression.
 
                 # YOUR CODE HERE [1 mark]
-              
-                pass
+                dct = (dct / (compressionFactor * quantizationTable[k])).round()
               
 
                 # Step 3. Add DC component to DCencoding vector for this
@@ -197,8 +197,8 @@ def forwardJPEG():
                 # of the loop to know where to put ITS DC component.
 
                 # YOUR CODE HERE [1 mark]
-
-                pass
+                DCencoding[k, DCencodingIndex[k]] = dct[0,0]
+                DCencodingIndex[k] += 1
               
               
                 # Step 4. Add the 63 AC components to the ACencoding vector.
@@ -209,8 +209,11 @@ def forwardJPEG():
                 # YOU MUST USE THE zigzag ARRAY OF INDICES!
 
                 # YOUR CODE HERE [2 marks] 
-
-                pass
+                for u in range(blockSize):
+                    for v in range(blockSize):
+                        if not ( u == 0 and v == 0 ):
+                            ACencoding[k, ACencodingIndex[k] + zigzag[u,v] - 1] = dct[u,v]
+                ACencodingIndex[k] += blockSize * blockSize - 1
               
 
     # At this point, the 'DCencoding' and 'ACencoding' vectors are
