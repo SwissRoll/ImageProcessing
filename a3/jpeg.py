@@ -1,5 +1,10 @@
-# JPEG encoder/decoder
+# CMPE 457 Assignment 3 - JPEG encoder/decoder
 #
+# Declan Rowett - 10211314
+# Dec. 6th, 2020
+#
+# I used Python 2.7 for this assignment.
+
 # This code runs the JPEG encoder on an image, but stops after it
 # collects the DC and AC components.  There is no compression (using
 # DPCM, RLE, or Huffman) of those component.
